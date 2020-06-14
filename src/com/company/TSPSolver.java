@@ -1,8 +1,6 @@
 package com.company;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Random;
 
 public class TSPSolver {
@@ -10,7 +8,7 @@ public class TSPSolver {
     private int[][] matrix;
     private int[] visited;
     private ArrayList<Integer> route;
-    private int traveledDistance;
+    private int totalTraveledDistance;
     private int length;
     private int size;
     private int startingNode = 0;
@@ -23,28 +21,50 @@ public class TSPSolver {
         for (int i = 0; i < length ; i++) {
             visited[i] = 0;
         }
-        this.traveledDistance = 0;
-        greedy(startingNode);
+        this.totalTraveledDistance = 0;
+        totalTraveledDistance = greedy(startingNode);
         size = route.size();
+        tryAllStartingPoints();
         //improveSolution();
     }
 
-    private void greedy(int startingNode){
+    private int greedy(int startingNode){
         int node = startingNode;
         int backup = -1;
+        int travelledDistance = 0;
         while(!isAllVisited()){
             route.add(node);
             visited[node] = 1;
             int tmp = findClosestNeighbor(node);
             if(tmp != -1) {
-                traveledDistance += matrix[node][tmp];
+                travelledDistance += matrix[node][tmp];
             }
             backup = node;
             node = tmp;
         }
         route.add(startingNode);
-        traveledDistance += matrix[this.startingNode][backup];
+        travelledDistance += matrix[startingNode][backup];
         computeRouteLength(route);
+        //printRoute(route);
+        return travelledDistance;
+    }
+    private void tryAllStartingPoints(){
+        int minDist = totalTraveledDistance;
+        int bestStartingNode = this.startingNode;
+        int localDist = 0;
+        for (int i = 0; i < length ; i++) {
+            flushVisited();
+            route.clear();
+            localDist = greedy(i);
+            if(localDist < minDist){
+                minDist = localDist;
+                bestStartingNode = i;
+            }
+        }
+        flushVisited();
+        route.clear();
+        System.out.println("Best starting point is: "+ bestStartingNode + " min distance found is: " + minDist);
+        this.totalTraveledDistance = greedy(bestStartingNode);
         printRoute(route);
     }
     private boolean isAllVisited(){
@@ -55,6 +75,13 @@ public class TSPSolver {
         //printRoute(route);
         return true;
     }
+
+    private void flushVisited(){
+        for (int i = 0; i < length; i++){
+            visited[i] = 0;
+        }
+    }
+
     private int findClosestNeighbor(int nodeIndex){
         int closest = -1;
         int closestIndex = -1;
@@ -108,7 +135,7 @@ public class TSPSolver {
     private void improveSolution(){
         ArrayList<Integer> currentRoute = route;
         ArrayList<Integer> testRoute = route;
-        int currentDistance = traveledDistance;
+        int currentDistance = totalTraveledDistance;
         Random r = new Random();
         int low = 0;
         int high = size-1;
@@ -164,8 +191,8 @@ public class TSPSolver {
         return route;
     }
 
-    public int getTraveledDistance() {
-        return traveledDistance;
+    public int getTotalTraveledDistance() {
+        return totalTraveledDistance;
     }
 
 }
