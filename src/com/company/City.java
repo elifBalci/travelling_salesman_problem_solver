@@ -16,6 +16,10 @@ public class City {
     }
 
     public City(String line){
+        while (line.charAt(0) == ' ')
+            line = line.substring(1, line.length());
+        line = line.replace("   ", " ");
+        line = line.replace("  ", " ");
         String[] splitted = line.split(" ");
         this.id = Integer.parseInt(splitted[0]);
         this.x_coord = Integer.parseInt(splitted[1]);

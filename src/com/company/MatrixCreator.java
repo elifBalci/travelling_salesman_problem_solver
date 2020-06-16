@@ -14,7 +14,7 @@ public class MatrixCreator {
             for (int j=0; j<size; j++)
                 m[i][j] = computeDistance(cityList.get(i), cityList.get(j));
     }
-    private int computeDistance(City city1, City city2){
+    public static int computeDistance(City city1, City city2){
         int x1 = city1.getX_coord();
         int y1 = city1.getY_coord();
         int x2 = city2.getX_coord();

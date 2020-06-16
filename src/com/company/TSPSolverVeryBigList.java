@@ -3,22 +3,20 @@ package com.company;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class TSPSolver {
-
-    private int[][] matrix;
+public class TSPSolverVeryBigList {
     private int[] visited;
     private ArrayList<Integer> route;
     private int totalTraveledDistance;
-    private int length;
     private int size;
     private int startingNode = 0;
+    private ArrayList<City> cityArrayList;
 
-    public TSPSolver(int[][] matrix){
+    public TSPSolverVeryBigList(){
+        cityArrayList = City.getCityList();
+        size = City.getCityList().size();
         route = new ArrayList<>();
-        this.matrix = matrix;
-        this.length = matrix.length;
-        visited = new int[length];
-        for (int i = 0; i < length ; i++) {
+        visited = new int[size];
+        for (int i = 0; i < size ; i++) {
             visited[i] = 0;
         }
         this.totalTraveledDistance = 0;
@@ -45,42 +43,21 @@ public class TSPSolver {
             // findClosestNeighbor method will return -1 if there is no unvisited neighbor
             if(tmp != -1) {
                 // add the distance to total distance
-                travelledDistance += matrix[node][tmp];
+                travelledDistance += MatrixCreator.computeDistance(cityArrayList.get(node),cityArrayList.get(tmp));
             }
             backup = node;
             node = tmp;
         }
         // add starting node to the end of route
         route.add(startingNode);
-        travelledDistance += matrix[startingNode][backup];
+        travelledDistance +=  MatrixCreator.computeDistance(cityArrayList.get(startingNode),cityArrayList.get(backup));
         computeRouteLength(route);
         //printRoute(route);
         return travelledDistance;
     }
 
-    private void tryAllStartingPoints(){
-        // This function tries NN with all possible starting points in order to find the best.
-        int minDist = totalTraveledDistance;
-        int bestStartingNode = this.startingNode;
-        int localDist = 0;
-        for (int i = 0; i < length ; i++) {
-            //Route and visited lists should be clear before calling NN function
-            flushVisited();
-            route.clear();
-            localDist = NN(i);
-            if(localDist < minDist){
-                minDist = localDist;
-                bestStartingNode = i;
-            }
-        }
-        flushVisited();
-        route.clear();
-        System.out.println("Best starting point is: "+ bestStartingNode + " min distance found is: " + minDist);
-        this.totalTraveledDistance = NN(bestStartingNode);
-        printRoute(route);
-    }
     private boolean isAllVisited(){
-        for (int i = 0; i < length; i++){
+        for (int i = 0; i < size; i++){
             if (visited[i] == 0)
                 return false;
         }
@@ -88,82 +65,30 @@ public class TSPSolver {
         return true;
     }
 
-    private void flushVisited(){
-        for (int i = 0; i < length; i++){
-            visited[i] = 0;
-        }
-    }
 
     private int findClosestNeighbor(int nodeIndex){
         int closest = -1;
         int closestIndex = -1;
 
-        for (int i = 0; i < length ; i++) {
+        for (int i = 0; i < size ; i++) {
             if(i != nodeIndex && visited[i] == 0){
                 closestIndex = i;
-                closest = matrix[nodeIndex][i];
+                closest = MatrixCreator.computeDistance(cityArrayList.get(nodeIndex),cityArrayList.get(i));
                 break;
             }
         }
 
-        for (int i = 0; i < length ; i++) {
+        for (int i = 0; i < size ; i++) {
             if (i == nodeIndex)
                 continue;     //closest can't be node itself
-            if(closest > matrix[nodeIndex][i] && visited[i] == 0 ){
+            if(closest >  MatrixCreator.computeDistance(cityArrayList.get(nodeIndex),cityArrayList.get(i)) && visited[i] == 0 ){;
                 closestIndex = i;
-                closest = matrix[nodeIndex][i];
+                closest =MatrixCreator.computeDistance(cityArrayList.get(nodeIndex),cityArrayList.get(i));
             }
         }
         return closestIndex;
     }
 
-    private void randomSwap(){
-        // This function randomly swaps 2 cities to make any possible improvement.
-        // But it is not effective.
-        ArrayList<Integer> currentRoute = route;
-        ArrayList<Integer> testRoute = route;
-        int currentDistance = totalTraveledDistance;
-        Random r = new Random();
-        int low = 0;
-        int high = size-1;
-        int rand1 = 0;
-        int rand2 = 0;
-        int routeLength = 0;
-        for (int i = 0; i < size*2 ; i++) {
-            for (int j = 0; j < 75 ; j++) {
-                rand1 = r.nextInt(high - low) + low;
-                rand2 = r.nextInt(high - low) + low;
-                route.remove(size-1);
-                int backup = testRoute.get(rand1);
-                int backup2 = testRoute.get(rand2);
-                testRoute.set(rand1, testRoute.get(rand2));
-                testRoute.set(rand2, backup);
-                testRoute.add(testRoute.get(0));
-                routeLength = computeRouteLength(testRoute);
-                if (routeLength< currentDistance) {
-                    System.out.println(routeLength);
-                    printRoute(testRoute);
-                    System.out.println();
-                }
-                if (routeLength< this.totalTraveledDistance) {
-                    System.out.println(routeLength);
-                    printRoute(testRoute);
-                    System.out.println();
-                }
-                //If distance is increased in a certain rate, swap back.
-                else if(routeLength-currentDistance > currentDistance/5){
-                    System.out.println("swap back..."+ computeRouteLength(testRoute));
-                    testRoute.set(rand1, backup);
-                    testRoute.set(rand2, backup2);
-                    System.out.println("swapped back..."+ computeRouteLength(testRoute));
-                }
-                else {
-                    printRoute(testRoute);
-                    System.out.println("didn't swap..."+ computeRouteLength(testRoute));
-                }
-            }
-        }
-    }
 
     public void twoOpt() {
         ArrayList<Integer> newTour;
@@ -175,8 +100,11 @@ public class TSPSolver {
             swaps = 0;
             for (int i = 1; i < route.size() - 2; i++) {
                 for (int j = i + 1; j < route.size() - 1; j++) {
-                    if ((matrix[route.get(i)][route.get(i-1)] + matrix[route.get(j+1)][route.get(j)]) >=
-                            (matrix[route.get(i)][route.get(j+1)] + matrix[route.get(i-1)][route.get(j)])) {
+                    if ((MatrixCreator.computeDistance(cityArrayList.get(route.get(i)),cityArrayList.get(route.get(i-1))) +
+                            MatrixCreator.computeDistance(cityArrayList.get(route.get(j+1)),cityArrayList.get(route.get(j))) >=
+                            (MatrixCreator.computeDistance(cityArrayList.get(route.get(i)),cityArrayList.get(route.get(j+1))) +
+                                    MatrixCreator.computeDistance(cityArrayList.get(route.get(i-1)),cityArrayList.get(route.get(j)))))){
+
                         newTour = swapCities(route, i, j);
                         newLength = computeRouteLength(newTour);
                         if (newLength < bestLength) {
@@ -213,7 +141,7 @@ public class TSPSolver {
     private int computeRouteLength(ArrayList<Integer> temp){
         int dist = 0;
         for (int i = 0; i < temp.size()-1; i++) {
-            dist = dist + matrix[temp.get(i)][temp.get(i+1)];
+            dist = dist + MatrixCreator.computeDistance(cityArrayList.get(temp.get(i)),cityArrayList.get(temp.get(i+1)));
         }
         return dist;
     }
